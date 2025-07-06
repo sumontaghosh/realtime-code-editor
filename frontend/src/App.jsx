@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import io from 'socket.io-client';
 import Editor from '@monaco-editor/react'
+import {v4 as uuid} from 'uuid'
 
 const socket = io("https://codecollab-26gv.onrender.com");
 
@@ -96,8 +97,15 @@ const App = () => {
     socket.emit("languageChange", { roomId, language: newLanguage });
   };
 
+  const [userInput, setUserInput] = useState("")
+
   const runCode = () => {
-    socket.emit("compileCode", { code, roomId, language, version });
+    socket.emit("compileCode", { code, roomId, language, version, input: userInput });
+  };
+
+  const createRoomId = () => {
+    const roomId = uuid()
+    setRoomId(roomId)
   }
 
   if (!joined) {
@@ -109,7 +117,8 @@ const App = () => {
         placeholder="Room Id"
         value={roomId}
         onChange={(e) => setRoomId(e.target.value)}
-      />
+        />
+        <button onClick={createRoomId}>Create ID</button>
         <input
           type="text"
         placeholder="Your Name"
@@ -170,7 +179,9 @@ const App = () => {
         }
         
       }
-    />
+      />
+      
+      <textarea className="input-console" value={userInput} onChange={e=>setUserInput(e.target.value)} placeholder="Enter input here..."/>
     <button className="run-btn" onClick={runCode}>Execute</button>
     <textarea className="output-console" value={outPut} readOnly 
       placeholder="Output will appear here ..."
