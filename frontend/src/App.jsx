@@ -13,7 +13,9 @@ const App = () => {
   const [code, setCode] = useState("// start code here");
   const [copySuccess, setCopySuccess] = useState("");
   const [users, setUsers] = useState([]);
-  const [typing, setTyping] = useState("")
+  const [typing, setTyping] = useState("");
+  const [outPut, setOutPut] = useState("");
+  const [version, setVersion] = useState("*")
 
 
   useEffect(() => {
@@ -32,13 +34,18 @@ const App = () => {
 
     socket.on("languageUpdate", (newLanguage) => {
       setLanguage(newLanguage);
-    })
+    });
+
+    socket.on("codeResponse", (response) => {
+      setOutPut(response.run.output)
+    });
 
     return () => {
       socket.off("userJoined");
       socket.off("codeUpdate");
       socket.off("userTyping");
       socket.off("languageUpdate");
+      socket.off("codeResponse");
     };
   }, []);
 
@@ -87,6 +94,10 @@ const App = () => {
     const newLanguage = e.target.value
     setLanguage(newLanguage)
     socket.emit("languageChange", { roomId, language: newLanguage });
+  };
+
+  const runCode = () => {
+    socket.emit("compileCode", { code, roomId, language, version });
   }
 
   if (!joined) {
@@ -111,7 +122,7 @@ const App = () => {
       </div>
   }
   
-  return <div className="editor-container">
+  return ( <div className="editor-container">
     <div className="sidebar">
       <div className="room-info">
       <h2>Code Room: {roomId}</h2>
@@ -144,9 +155,9 @@ const App = () => {
       </button>
     </div>
     
-    <div className="editor-wrapper"></div>
+    <div className="editor-wrapper">
     <Editor
-      height={"100%"}
+      height={"60%"}
       defaultLanguage={language}
       language={language}
       value={code}
@@ -160,7 +171,13 @@ const App = () => {
         
       }
     />
-  </div>
+    <button className="run-btn" onClick={runCode}>Execute</button>
+    <textarea className="output-console" value={outPut} readOnly 
+      placeholder="Output will appear here ..."
+    />
+    </div>
+  </div >
+    );
 };
 
 export default App
